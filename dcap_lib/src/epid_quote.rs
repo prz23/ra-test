@@ -79,6 +79,14 @@ impl EpidQuote {
         (sigrl_list.clone(),sigrl_list.len() as u32)
     }
 
+    pub fn generate_quote_vec_report(&mut self,report_data:sgx_report_data_t) -> Result<Vec<u8>,&'static str>{
+        let mut quote_buf: Vec<u8> = vec![0; QUOTE_BUF_LEN];
+        let quote_ptr = quote_buf.as_mut_ptr();
+        self.generate_quote(quote_ptr,report_data).expect("error");
+
+        Ok(extract_quote(quote_buf))
+    }
+
     pub fn generate_quote_vec(&mut self,report_data:&str) -> Result<Vec<u8>,&'static str>{
 
         let mut req_data = sgx_report_data_t::default();

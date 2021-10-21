@@ -11,8 +11,8 @@ mod epid_quote;
 pub use crate::epid_quote::*;
 mod hex;
 pub use crate::hex::*;
-mod cert;
-mod tls;
+pub mod cert;
+pub mod tls;
 
 pub use crate::cert::*;
 

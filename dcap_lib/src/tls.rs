@@ -6,19 +6,17 @@ use curv::arithmetic::Converter;
 
 pub type SignType = u64;
 
-pub fn generate_cert(){
+pub fn generate_key_pair() -> (PK, SK){
     let (prv_k, pub_k) = p256_key_gen();
-
+    (pub_k,prv_k)
 }
 
 #[allow(const_err)]
 pub fn create_attestation_report(pub_k: &PK, sign_type: SignType) -> Result<(String, String, String), String> {
     let mut  new = EpidQuote::new();
-    let size = new.get_group_id();
-    let (sigrl,_) = new.get_sigrl_data();
+    new.get_group_id();
 
-    // (2) Generate the report
-    // Fill ecc256 public key into report_data
+    // (2) Generate the report Fill ecc256 public key into report_data
     let mut report_data: sgx_report_data_t = sgx_report_data_t::default();
     let mut pub_k_gx = pub_k.x_coor().unwrap().to_bytes();
     pub_k_gx.reverse();
@@ -27,9 +25,7 @@ pub fn create_attestation_report(pub_k: &PK, sign_type: SignType) -> Result<(Str
     report_data.d[..32].clone_from_slice(&pub_k_gx);
     report_data.d[32..].clone_from_slice(&pub_k_gy);
 
-    let report_data = "kdsfjalsdjfklasjdfkl";
-
-    let rep = new.generate_quote_vec(report_data).unwrap();
+    let rep = new.generate_quote_vec_report(report_data).unwrap();
 
     // Added 09-28-2018
     // Perform a check on qe_report to verify if the qe_report is valid

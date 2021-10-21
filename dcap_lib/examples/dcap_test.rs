@@ -89,7 +89,7 @@ impl Drop for DcapDemo {
 }
 
 fn main() {
-    test_epid();
+    test_epid_tls();
     let report_str = "Dcap demo sample";
     let mut dcap_demo = DcapDemo::new(report_str);
 
@@ -121,6 +121,14 @@ fn main() {
         _ => println!("Error: App: Verification completed with Terminal result: {}", result),
     }
 
+}
+
+pub fn test_epid_tls(){
+    use dcap_quote::tls::{generate_key_pair,create_attestation_report};
+
+    let (a,b) = generate_key_pair();
+    let res = create_attestation_report(&a,0);
+    println!("EPID! {:?}",res);
 }
 
 pub fn test_epid(){
