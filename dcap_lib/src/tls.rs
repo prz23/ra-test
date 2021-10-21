@@ -6,6 +6,26 @@ use curv::arithmetic::Converter;
 
 pub type SignType = u64;
 
+pub fn generate_cert(){
+    let (pub_k,prv_k) = generate_key_pair();
+    let (attn_report, sig, cert) = match create_attestation_report(&pub_k, 0) {
+        Ok(r) => r,
+        Err(e) => {
+            println!("Error in create_attestation_report: {:?}", e);
+            return ;
+        }
+    };
+    let payload = attn_report + "|" + &sig + "|" + &cert;
+    let (key_der, cert_der) = match cert::gen_ecc_cert(payload, &prv_k, &pub_k) {
+        Ok(r) => r,
+        Err(e) => {
+            println!("Error in gen_ecc_cert: {:?}", e);
+            return ;
+        }
+    };
+    println!("======================success==============================");
+}
+
 pub fn generate_key_pair() -> (PK, SK){
     let (prv_k, pub_k) = p256_key_gen();
     (pub_k,prv_k)

@@ -124,11 +124,9 @@ fn main() {
 }
 
 pub fn test_epid_tls(){
-    use dcap_quote::tls::{generate_key_pair,create_attestation_report};
+    use dcap_quote::tls::{generate_cert};
 
-    let (a,b) = generate_key_pair();
-    let res = create_attestation_report(&a,0);
-    println!("EPID! {:?}",res);
+    generate_cert();
 }
 
 pub fn test_epid(){
