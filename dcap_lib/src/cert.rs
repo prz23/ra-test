@@ -168,7 +168,7 @@ pub fn gen_ecc_cert(payload: String,
                     // prv_k_r.reverse();
                     // writer.next().write_bytes(&prv_k_r);
                     let mut prv_k_r = prv_k.to_big_int().to_bytes();
-                    prv_k_r.reserve(0);
+                    prv_k_r.reverse();
                     writer.next().write_bytes(&prv_k_r);
                     writer.next().write_tagged(yasna::Tag::context(1), |writer| {
                         writer.write_bitvec(&BitVec::from_bytes(&pub_key_bytes));
