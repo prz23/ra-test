@@ -10,6 +10,8 @@ use sgx_types::{
     sgx_report_data_t, sgx_ql_qv_result_t, sgx_spid_t, sgx_quote_nonce_t,
     sgx_quote_sign_type_t, sgx_epid_group_id_t
 };
+use rand_core::OsRng;
+use rand_core::RngCore;
 
 const SGXIOC_GET_EPID_GROUP_ID: c_ulong = 0x80047301;
 const SGXIOC_GEN_EPID_QUOTE: c_ulong = 0xC0807302;
@@ -95,6 +97,7 @@ impl EpidQuote {
         println!("DcapQuote: generate_quote");
 
         let mut quote_nonce = sgx_quote_nonce_t { rand : [0;16] };
+        OsRng.fill_bytes(&mut quote_nonce.rand);
         let (sigrl,sigrl_len) = self.get_sigrl_data();
         let quote_arg: IoctlGenEPIDQuoteArg = IoctlGenEPIDQuoteArg {
             report_data: report_data.clone(),
@@ -116,8 +119,12 @@ impl EpidQuote {
         }
     }
 
-    pub fn get_report_from_intel(self,quote_vec:Vec<u8>){
+    pub fn get_report_from_intel(self,quote_vec:Vec<u8>) -> (String, String, String){
         get_report_from_intel(quote_vec)
+    }
+
+    pub fn verify_report(self){
+        println!("unimplentment");
     }
 
 }
@@ -239,7 +246,7 @@ pub fn lookup_ipv4(host: &str, port: u16) -> std::net::SocketAddr {
     unreachable!("Cannot lookup address");
 }
 
-pub fn get_report_from_intel(quote : Vec<u8>) {
+pub fn get_report_from_intel(quote : Vec<u8>) -> (String, String, String){
     let config = make_ias_client_config();
     let encoded_quote = base64::encode(&quote[..]);
     let encoded_json = format!("{{\"isvEnclaveQuote\":\"{}\"}}\r\n", encoded_quote);
@@ -268,6 +275,69 @@ pub fn get_report_from_intel(quote : Vec<u8>) {
     let resp_string = String::from_utf8(plaintext.clone()).unwrap();
 
     println!("resp_string = {}", resp_string);
+    let (attn_report, sig, cert) = parse_response_attn_report(&plaintext);
+
+    (attn_report, sig, cert)
+}
+
+fn parse_response_attn_report(resp : &[u8]) -> (String, String, String){
+    println!("parse_response_attn_report");
+    let mut headers = [httparse::EMPTY_HEADER; 16];
+    let mut respp   = httparse::Response::new(&mut headers);
+    let result = respp.parse(resp);
+    println!("parse result {:?}", result);
+
+    let msg : &'static str;
+
+    match respp.code {
+        Some(200) => msg = "OK Operation Successful",
+        Some(401) => msg = "Unauthorized Failed to authenticate or authorize request.",
+        Some(404) => msg = "Not Found GID does not refer to a valid EPID group ID.",
+        Some(500) => msg = "Internal error occurred",
+        Some(503) => msg = "Service is currently not able to process the request (due to
+            a temporary overloading or maintenance). This is a
+            temporary state – the same request can be repeated after
+            some time. ",
+        _ => {println!("DBG:{}", respp.code.unwrap()); msg = "Unknown error occured"},
+    }
+
+    println!("{}", msg);
+    let mut len_num : u32 = 0;
+
+    let mut sig = String::new();
+    let mut cert = String::new();
+    let mut attn_report = String::new();
+
+    for i in 0..respp.headers.len() {
+        let h = respp.headers[i];
+        //println!("{} : {}", h.name, str::from_utf8(h.value).unwrap());
+        match h.name{
+            "Content-Length" => {
+                let len_str = String::from_utf8(h.value.to_vec()).unwrap();
+                len_num = len_str.parse::<u32>().unwrap();
+                println!("content length = {}", len_num);
+            }
+            "X-IASReport-Signature" => sig = std::str::from_utf8(h.value).unwrap().to_string(),
+            "X-IASReport-Signing-Certificate" => cert = std::str::from_utf8(h.value).unwrap().to_string(),
+            _ => (),
+        }
+    }
+
+    // Remove %0A from cert, and only obtain the signing cert
+    cert = cert.replace("%0A", "");
+    cert = cert::percent_decode(cert);
+    let v: Vec<&str> = cert.split("-----").collect();
+    let sig_cert = v[2].to_string();
+
+    if len_num != 0 {
+        let header_len = result.unwrap().unwrap();
+        let resp_body = &resp[header_len..];
+        attn_report = std::str::from_utf8(resp_body).unwrap().to_string();
+        println!("Attestation report: {}", attn_report);
+    }
+
+    // len_num == 0
+    (attn_report, sig, sig_cert)
 }
 
 fn as_u32_le(array: &[u8; 4]) -> u32 {

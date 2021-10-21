@@ -12,6 +12,8 @@ pub use crate::epid_quote::*;
 mod hex;
 pub use crate::hex::*;
 mod cert;
+mod tls;
+
 pub use crate::cert::*;
 
 #[no_mangle]

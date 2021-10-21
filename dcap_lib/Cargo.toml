@@ -22,6 +22,7 @@ chrono  = "*"
 yasna   = { git = "https://github.com/sgx-test/yasna.rs", features = ["bit-vec", "num-bigint", "chrono"] }
 bit-vec = "*"
 rand_core = { version = "0.5.1", features = ["getrandom"] }
+num-bigint = "0.4.2"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

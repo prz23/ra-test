@@ -16,6 +16,8 @@ use curv::cryptographic_primitives::hashing::traits::Hash;
 use curv::elliptic::curves::traits::{ECPoint, ECScalar};
 use curv::BigInt;
 
+use num_bigint::BigUint;
+
 use super::CERTEXPIRYDAYS;
 const ISSUER : &str = "MesaTEE";
 const SUBJECT : &str = "MesaTEE";
@@ -53,8 +55,7 @@ pub fn p256_key_sign(sk:Secp256r1Scalar,message:Vec<u8>) -> (Vec<u8>,Vec<u8>){
 
 pub fn gen_ecc_cert(payload: String,
                     prv_k: &SK,
-                    pub_k: &PK,
-                    ecc_handle: &SgxEccHandle) -> Result<(Vec<u8>, Vec<u8>), String> {
+                    pub_k: &PK, ) -> Result<(Vec<u8>, Vec<u8>), String> {
     // Generate public key bytes since both DER will use it
     let mut pub_key_bytes: Vec<u8> = vec![4];
     // let mut pk_gx = pub_k.gx.clone();
@@ -137,16 +138,18 @@ pub fn gen_ecc_cert(payload: String,
             let sig = {
                 let tbs = &writer.buf[4..];
                 // ecc_handle.ecdsa_sign_slice(tbs, &prv_k).unwrap()
-                p256_sha256_sign(prv_k.into(),tbs.to_vec());
+                p256_sha256_sign(prv_k.clone(),tbs.to_vec())
             };
             let sig_der = yasna::construct_der(|writer| {
                 writer.write_sequence(|writer| {
-                    let mut sig_x = sig.x.clone();
+                    //let mut sig_x = sig.x.clone();
+                    let mut sig_x = sig[..32].to_vec();
                     sig_x.reverse();
-                    let mut sig_y = sig.y.clone();
+                    //let mut sig_y = sig.y.clone();
+                    let mut sig_y = sig[32..].to_vec();
                     sig_y.reverse();
-                    writer.next().write_biguint(&BigUint::from_slice(&sig_x));
-                    writer.next().write_biguint(&BigUint::from_slice(&sig_y));
+                    writer.next().write_biguint(&BigUint::from_bytes_be(&sig_x));
+                    writer.next().write_biguint(&BigUint::from_bytes_be(&sig_y));
                 });
             });
             writer.next().write_bitvec(&BitVec::from_bytes(&sig_der));
