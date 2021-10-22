@@ -24,6 +24,7 @@ pub fn start_test_tls_server(){
     config
         .set_single_cert_with_ocsp_and_sct(certs, privkey, vec![], vec![])
         .unwrap();
+    println!("==============start server====================");
     let mut sess = rustls::ServerSession::new(&std::sync::Arc::new(config));
 
     let listener = std::net::TcpListener::bind("127.0.0.1:5044").unwrap();
@@ -67,7 +68,7 @@ pub fn generate_cert() -> Result<(Vec<u8>,Vec<u8>),String>{
         }
     };
     let payload = attn_report + "|" + &sig + "|" + &cert;
-    let (key_der, cert_der) = match cert::gen_ecc_cert(payload, &prv_k, &pub_k) {
+    let cert_der= match cert::gen_ecc_cert(payload, a, b.clone()) {
         Ok(r) => r,
         Err(e) => {
             println!("Error in gen_ecc_cert: {:?}", e);
