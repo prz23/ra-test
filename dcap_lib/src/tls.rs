@@ -3,6 +3,8 @@ use crate::cert::{gen_ecc_cert, p256_key_gen, SK, PK};
 use crate::epid_quote::EpidQuote;
 use curv::elliptic::curves::traits::{ECPoint, ECScalar};
 use curv::arithmetic::Converter;
+use curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
+use curv::cryptographic_primitives::hashing::traits::Hash;
 
 pub type SignType = u64;
 
@@ -52,10 +54,10 @@ pub fn create_attestation_report(pub_k: &PK, sign_type: SignType) -> Result<(Str
     new.verify_report();
 
 
-    // let mut rhs_vec : Vec<u8> = quote_nonce.rand.to_vec();
-    // rhs_vec.extend(&return_quote_buf[..quote_len as usize]);
-    // let rhs_hash = rsgx_sha256_slice(&rhs_vec[..]).unwrap();
-    // let lhs_hash = &qe_report.body.report_data.d[..32];
+    // let mut rhs_vec : Vec<u8> = new.quote_nonce.rand.to_vec();
+    // rhs_vec.extend(&rep);
+    // let rhs_hash = HSha256::create_hash_from_slice(&rhs_vec);
+    //let lhs_hash = &qe_report.body.report_data.d[..32];
     //
     // println!("rhs hash = {:02X}", rhs_hash.iter().format(""));
     // println!("report hs= {:02X}", lhs_hash.iter().format(""));

@@ -34,10 +34,11 @@ pub struct IoctlGenEPIDQuoteArg {
     quote_buf: *mut u8,                // Output
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct EpidQuote {
     fd: c_int,
     pub group_id: sgx_epid_group_id_t,
+    pub quote_nonce: sgx_quote_nonce_t,
 }
 
 impl EpidQuote {
@@ -50,6 +51,7 @@ impl EpidQuote {
             Self {
                 fd: fd,
                 group_id: sgx_epid_group_id_t::default(),
+                quote_nonce: sgx_quote_nonce_t::default()
             }
         } else {
             panic!("Open /dev/sgx failed")
@@ -101,17 +103,21 @@ impl EpidQuote {
         Ok(extract_quote(quote_buf))
     }
 
-    pub fn generate_quote(&mut self, quote_buf: *mut u8,  report_data: sgx_report_data_t) -> Result<i32, &'static str> {
-        println!("DcapQuote: generate_quote");
-
+    pub fn generate_quote_nonce(&mut self) -> sgx_quote_nonce_t{
         let mut quote_nonce = sgx_quote_nonce_t { rand : [0;16] };
         OsRng.fill_bytes(&mut quote_nonce.rand);
+        self.quote_nonce = quote_nonce.clone();
+        return quote_nonce
+    }
+
+    pub fn generate_quote(&mut self, quote_buf: *mut u8,  report_data: sgx_report_data_t) -> Result<i32, &'static str> {
+        println!("DcapQuote: generate_quote");
         let (sigrl,sigrl_len) = self.get_sigrl_data();
         let quote_arg: IoctlGenEPIDQuoteArg = IoctlGenEPIDQuoteArg {
             report_data: report_data.clone(),
             quote_type: sgx_quote_sign_type_t::SGX_LINKABLE_SIGNATURE,
             spid: self.read_spid(),
-            nonce: quote_nonce,
+            nonce: self.generate_quote_nonce(),
             sigrl_ptr: sigrl.as_ptr() as *const u8,
             sigrl_len: sigrl_len,
             quote_buf_len: QUOTE_BUF_LEN as u32,
