@@ -89,7 +89,38 @@ impl Drop for DcapDemo {
 }
 
 fn main() {
-    test_epid_tls();
+    //test_epid_tls();
+    test_epid_tls_server();
+    //origin_demo();
+}
+
+pub fn test_epid_tls_server(){
+    use dcap_quote::tls::{start_test_tls_server};
+    start_test_tls_server();
+}
+
+pub fn test_epid_tls(){
+    use dcap_quote::tls::{generate_cert};
+
+    generate_cert();
+}
+
+pub fn test_epid(){
+    use dcap_quote::EpidQuote;
+    println!("EPID!");
+    let mut  new = EpidQuote::new();
+    let size = new.get_group_id();
+    println!("EPID group_id {:?}",size);
+    let (sigrl,_) = new.get_sigrl_data();
+    println!("EPID sigrl {:?}",sigrl);
+    let report_data = "kdsfjalsdjfklasjdfkl";
+
+    let res = new.generate_quote_vec(report_data).unwrap();
+    println!("EPID extracted_buf {:?}",res);
+    new.get_report_from_intel(res);
+}
+
+pub fn origin_demo() {
     let report_str = "Dcap demo sample";
     let mut dcap_demo = DcapDemo::new(report_str);
 
@@ -120,26 +151,4 @@ fn main() {
         },
         _ => println!("Error: App: Verification completed with Terminal result: {}", result),
     }
-
-}
-
-pub fn test_epid_tls(){
-    use dcap_quote::tls::{generate_cert};
-
-    generate_cert();
-}
-
-pub fn test_epid(){
-    use dcap_quote::EpidQuote;
-    println!("EPID!");
-    let mut  new = EpidQuote::new();
-    let size = new.get_group_id();
-    println!("EPID group_id {:?}",size);
-    let (sigrl,_) = new.get_sigrl_data();
-    println!("EPID sigrl {:?}",sigrl);
-    let report_data = "kdsfjalsdjfklasjdfkl";
-
-    let res = new.generate_quote_vec(report_data).unwrap();
-    println!("EPID extracted_buf {:?}",res);
-    new.get_report_from_intel(res);
 }

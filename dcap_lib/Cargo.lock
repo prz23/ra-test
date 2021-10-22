@@ -279,6 +279,7 @@ dependencies = [
  "num-bigint 0.4.2",
  "pem",
  "rand_core 0.5.1",
+ "ring",
  "rustls",
  "sgx_types",
  "webpki",

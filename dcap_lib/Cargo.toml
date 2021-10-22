@@ -23,6 +23,6 @@ yasna   = { git = "https://github.com/sgx-test/yasna.rs", features = ["bit-vec",
 bit-vec = "*"
 rand_core = { version = "0.5.1", features = ["getrandom"] }
 num-bigint = "0.4.2"
-
+ring = "0.16.20"
 [lib]
 crate-type = ["cdylib", "rlib"]
