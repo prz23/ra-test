@@ -89,9 +89,18 @@ impl Drop for DcapDemo {
 }
 
 fn main() {
-    //test_epid_tls();
     test_epid_tls_server();
+    //test_client();
     //origin_demo();
+}
+pub fn test_client(){
+    use dcap_quote::tls::{start_test_tls_server};
+    use ue_ra_client::post_tls;
+    // std::thread::spawn(||{
+    //     start_test_tls_server();
+    // });
+    //std::thread::sleep(std::time::Duration::from_secs(3));
+    //post_tls(&"https://localhost:443".to_string(),"hello".as_bytes().to_vec());
 }
 
 pub fn test_epid_tls_server(){

@@ -24,5 +24,7 @@ bit-vec = "*"
 rand_core = { version = "0.5.1", features = ["getrandom"] }
 num-bigint = "0.4.2"
 ring = "0.16.20"
+ue-ra-client = { path = "../../ra-client" }
+
 [lib]
 crate-type = ["cdylib", "rlib"]
