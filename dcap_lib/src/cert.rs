@@ -86,9 +86,9 @@ pub fn p256_key_sign(sk:Secp256r1Scalar,message:Vec<u8>) -> (Vec<u8>,Vec<u8>){
 pub fn gen_ecc_cert(payload: String,
                     prv_k: signature::EcdsaKeyPair , key_pair: Vec<u8>) -> Result<Vec<u8>, String> {
         // Generate public key bytes since both DER will use it
-        let mut pub_key_bytes: Vec<u8> = vec![4];
+        let mut pub_key_bytes: Vec<u8> = Vec::with_capacity(0);
         pub_key_bytes.extend_from_slice(&key_pair);
-
+        println!("==pub_key_bytes=={:?}",pub_key_bytes);
         // Generate Certificate DER
         let cert_der = yasna::construct_der(|writer| {
             writer.write_sequence(|writer| {

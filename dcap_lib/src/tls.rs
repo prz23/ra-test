@@ -56,11 +56,11 @@ pub fn start_test_tls_server(){
 pub fn generate_cert() -> Result<(Vec<u8>,Vec<u8>),String>{
     let (pub_k,prv_k) = generate_key_pair();
 
-    let  (a,b) = ring_key_gen_pcks_8();
-    let pub_key = a.public_key().as_ref().to_vec(); // TODO:: put into create_attestation_report
+    let  (key_pair, key_pair_doc) = ring_key_gen_pcks_8();
+    let pub_key = key_pair.public_key().as_ref().to_vec(); // TODO:: put into create_attestation_report
     println!("==pub_key=={:?}",pub_key);
-    println!("==pub_key=b={:?}",b);
-    let (attn_report, sig, cert) = match create_attestation_report(pub_key, 0) {
+    println!("==key_pair_doc=={:?}", key_pair_doc);
+    let (attn_report, sig, cert) = match create_attestation_report(pub_key.clone(), 0) {
         Ok(r) => r,
         Err(e) => {
             println!("Error in create_attestation_report: {:?}", e);
@@ -68,7 +68,7 @@ pub fn generate_cert() -> Result<(Vec<u8>,Vec<u8>),String>{
         }
     };
     let payload = attn_report + "|" + &sig + "|" + &cert;
-    let cert_der= match cert::gen_ecc_cert(payload, a, b.clone()) {
+    let cert_der= match cert::gen_ecc_cert(payload, key_pair, pub_key.clone()) {
         Ok(r) => r,
         Err(e) => {
             println!("Error in gen_ecc_cert: {:?}", e);
@@ -76,7 +76,7 @@ pub fn generate_cert() -> Result<(Vec<u8>,Vec<u8>),String>{
         }
     };
 
-    Ok((b,cert_der))
+    Ok((key_pair_doc, cert_der))
 }
 
 pub fn generate_key_pair() -> (PK, SK){
@@ -89,21 +89,10 @@ pub fn create_attestation_report(pub_k: Vec<u8>, sign_type: SignType) -> Result<
     let mut  new = EpidQuote::new();
     new.get_group_id();
 
-    // (2) Generate the report Fill ecc256 public key into report_data
-    // let mut report_data: sgx_report_data_t = sgx_report_data_t::default();
-    // let mut pub_k_gx = pub_k.x_coor().unwrap().to_bytes();
-    // pub_k_gx.reverse();
-    // let mut pub_k_gy =  pub_k.y_coor().unwrap().to_bytes();
-    // pub_k_gy.reverse();
-    // report_data.d[..32].clone_from_slice(&pub_k_gx);
-    // report_data.d[32..].clone_from_slice(&pub_k_gy);
-
     let mut report_data: sgx_report_data_t = sgx_report_data_t::default();
     let mut pub_k_gx = pub_k[1..33].to_vec();
-    //pub_k_gx.reverse();
     report_data.d[..32].clone_from_slice(&pub_k_gx);
     let mut pub_k_gy = pub_k[33..].to_vec();
-    //pub_k_gy.reverse();
     report_data.d[32..].clone_from_slice(&pub_k_gy);
 
     let rep = new.generate_quote_vec_report(report_data).unwrap();
